@@ -1,80 +1,127 @@
-import { useDispatch } from "react-redux";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+//* Libraries
+import style from "./ContactForm.module.css";
+import { IoPersonAdd } from "react-icons/io5";
+import { FaPhone } from "react-icons/fa6";
+import { motion } from "framer-motion";
 import { nanoid } from "nanoid";
-import { object, string } from "yup";
+import toast, { Toaster } from "react-hot-toast";
 
-import { addContactAction } from "../../redux/store";
-import styles from "./contactForm.module.css";
+// * Redux
+import { useDispatch } from "react-redux";
+import { addContact } from "../../redux/contactsSlice";
 
-const initNewUser = { name: "", number: "" };
-
-const NewUserShema = object().shape({
-  name: string()
-    .min(3, "The name must contain at least 3 characters")
-    .max(50, "The name must contain at least 50 characters")
-    .required("Required field"),
-  number: string()
-    .min(3, "The number must contain at least 3 characters")
-    .max(14, "The number must contain at least 14 characters")
-    .required("Required field")
+//* Formik
+import * as Yup from "yup";
+import "yup-phone-lite";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+const validationSchema = Yup.object().shape({
+  name: Yup.string()
+    .min(3, "Min. 3 symbols")
+    .max(50, "Max 50 symbols")
+    .required("Required"),
+  number: Yup.string()
+    .phone("", "Please enter a valid phone number")
+    .required("A phone number is required"),
 });
 
-export default function ContactForm() {
+//* Random color
+const randomColorsArr = [
+  "#A3C4BC",
+  "#C3B299",
+  "#D4A5A5",
+  "#A5A5D4",
+  "#D4C5A5",
+  "#A5D4C5",
+  "#C5A5D4",
+  "#D4A5C5",
+  "#A5D4A5",
+  "#C5D4A5",
+];
+const colorGenerator = () => {
+  return randomColorsArr[
+    Math.ceil(Math.random(0, randomColorsArr.length - 1) * 10)
+  ];
+};
+
+const ContactForm = () => {
   const dispatch = useDispatch();
 
-  const addContact = (data) => {
-    dispatch(addContactAction(data));
+  const onFormSubmit = (formData, actions) => {
+    dispatch(
+      addContact({
+        ...formData,
+        color: colorGenerator(),
+        id: `${nanoid(16)}`,
+      })
+    );
+
+    notifySuccessAdd(formData.name);
+    actions.resetForm();
   };
 
-  const handleSubmit = (data, action) => {
-    if (data.name.trim() === "" || data.number.trim() === "") {
-      return;
-    }
-
-    const newUser = { ...data, id: nanoid().toLowerCase() };
-    addContact(newUser);
-    action.resetForm();
-  };
+  const notifySuccessAdd = (personName) =>
+    toast.success(`${personName} is successfully added!`);
 
   return (
-    <Formik
-      initialValues={initNewUser}
-      validationSchema={NewUserShema}
-      onSubmit={handleSubmit}
-    >
-      <Form className={styles.form}>
-        <div className={styles.inputWrapper}>
-          <label htmlFor="name">Name:</label>
-          <Field
-            className={styles.input}
-            type="text"
-            name="name"
-            id="name"
-            autoComplete="off"
-          />
-          <ErrorMessage className={styles.error} name="name" component="span" />
-        </div>
+    <>
+      <Formik
+        initialValues={{ name: "", number: "" }}
+        onSubmit={onFormSubmit}
+        validationSchema={validationSchema}
+      >
+        <motion.div
+          className={style.pageHeader}
+          initial={{ opacity: 0, x: -90 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <Form className={style.formWrapper} autoComplete="off">
+            <div className={style.inputsWrapper}>
+              <div>
+                <label className={style.inputLabel} htmlFor="">
+                  Name
+                </label>
+                <div className={style.inputIconWrapper}>
+                  <IoPersonAdd className={style.inputIcon} />
+                  <Field className={style.dataInput} type="text" name="name" />
+                </div>
+                <ErrorMessage
+                  className={style.errorMessage}
+                  name="name"
+                  component="span"
+                />
+              </div>
 
-        <div className={styles.inputWrapper}>
-          <label htmlFor="number">Number:</label>
-          <Field
-            className={styles.input}
-            type="text"
-            name="number"
-            id="number"
-            autoComplete="off"
-          />
-          <ErrorMessage
-            className={styles.error}
-            name="number"
-            component="span"
-          />
-        </div>
+              <div>
+                <label className={style.inputLabel} htmlFor="">
+                  Number
+                </label>
+                <div className={style.inputIconWrapper}>
+                  <FaPhone className={style.inputIcon} />
+                  <Field
+                    className={style.dataInput}
+                    type="text"
+                    name="number"
+                  />
+                </div>
+                <ErrorMessage
+                  className={style.errorMessage}
+                  name="number"
+                  component="span"
+                />
+              </div>
+            </div>
 
-        <button className={styles.button} type="submit">
-          Add contact
-        </button>
-      </Form>
-    </Formik>
+            <button className={style.addButton} type="submit">
+              Add contact
+            </button>
+          </Form>
+        </motion.div>
+      </Formik>
+      <Toaster position="top-center" reverseOrder={false} />
+    </>
   );
-}
+};
+
+export default ContactForm;

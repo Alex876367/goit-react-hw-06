@@ -1,5 +1,5 @@
 //* Libraries
-import style from "./ContactList.module.css";
+import style from "./FavList.module.css";
 import toast, { Toaster } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -16,8 +16,8 @@ const getVisibleContacts = (contactsData, name) => {
   return contactsData.filter((el) => el.name.includes(name));
 };
 
-const ContactList = () => {
-  const contactsData = useSelector((state) => state.contacts);
+const FavList = () => {
+  const contactsData = useSelector((state) => state.fav);
   const filterData = useSelector((state) => state.filters.name);
 
   const visibleContacts = getVisibleContacts(contactsData.items, filterData);
@@ -52,4 +52,4 @@ const ContactList = () => {
   );
 };
 
-export default ContactList;
+export default FavList;

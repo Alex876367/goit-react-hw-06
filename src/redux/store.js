@@ -1,59 +1,52 @@
-import { configureStore, createAction } from "@reduxjs/toolkit";
+//* Redux
+import { configureStore } from "@reduxjs/toolkit";
 
-import contacts from "../data/contacts.json";
+//* Reducers
+import contactsReducer from "./contactsSlice";
+import filterReducer from "./filtersSlice";
+import favortitesReducer from "./favSlice";
 
-const initialStore = {
-  contacts: {
-    items: JSON.parse(localStorage.getItem("contacts")) || contacts
+//* Persist
+import {
+  persistStore,
+  persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from "redux-persist";
+import storage from "redux-persist/lib/storage";
+
+const persistedContactsReducer = persistReducer(
+  {
+    key: "contacts",
+    storage,
   },
-  filters: {
-    name: ""
-  }
-};
+  contactsReducer
+);
 
-//Redusers
-const contactsReducer = (state = initialStore.contacts, action) => {
-  switch (action.type) {
-    case "contacts/addContact": {
-      return {
-        ...state,
-        items: [...state.items, action.payload]
-      };
-    }
-    case "contacts/deleteContact": {
-      console.log(" state:", state);
-      return {
-        ...state,
-        items: state.items.filter((el) => el.id !== action.payload.id)
-      };
-    }
-    default:
-      return state;
-  }
-};
+const persistedFavsReducer = persistReducer(
+  {
+    key: "favorites",
+    storage,
+  },
+  favortitesReducer
+);
 
-const filtersReducer = (state = initialStore.filters, action) => {
-  switch (action.type) {
-    case "filters/addFilterName": {
-      return {
-        ...state,
-        name: action.payload
-      };
-    }
-    default:
-      return state;
-  }
-};
-
-// Store
 export const store = configureStore({
   reducer: {
-    contacts: contactsReducer,
-    filters: filtersReducer
-  }
+    contacts: persistedContactsReducer,
+    filters: filterReducer,
+    fav: persistedFavsReducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }),
 });
 
-// Actions
-export const addContactAction = createAction("contacts/addContact");
-export const deleteContactAction = createAction("contacts/deleteContact");
-export const filterNameAction = createAction("filters/addFilterName");
+export const persistedStore = persistStore(store);
